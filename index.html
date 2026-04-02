@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>PDF Upload Queue</title>
+  <style>
+    body {
+      font-family: Arial;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+
+    .upload-box {
+      border: 2px dashed #aaa;
+      padding: 30px;
+      text-align: center;
+      background: #fff;
+      cursor: pointer;
+    }
+
+    .file-list {
+      margin-top: 20px;
+    }
+
+    .file-item {
+      padding: 8px;
+      background: #fff;
+      margin-bottom: 5px;
+      border-left: 4px solid #2196f3;
+    }
+
+    button {
+      margin-top: 15px;
+      padding: 10px 20px;
+      background: #2196f3;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    .success {
+      color: green;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+<h2>Upload up to 25 PDFs</h2>
+
+<input type="file" id="fileInput" multiple accept="application/pdf">
+
+<div class="file-list" id="fileList"></div>
+
+<button onclick="startUpload()">Start Upload</button>
+
+<h3>Uploaded URLs:</h3>
+<div id="result"></div>
+
+<script>
+  let filesQueue = [];
+
+  const fileInput = document.getElementById("fileInput");
+  const fileList = document.getElementById("fileList");
+  const resultDiv = document.getElementById("result");
+
+  fileInput.addEventListener("change", (e) => {
+    const files = Array.from(e.target.files);
+
+    if (files.length > 25) {
+      alert("Max 25 files allowed");
+      return;
+    }
+
+    filesQueue = files;
+    renderFileList();
+  });
+
+  function renderFileList() {
+    fileList.innerHTML = "";
+    filesQueue.forEach((file, index) => {
+      const div = document.createElement("div");
+      div.className = "file-item";
+      div.innerText = `${index + 1}. ${file.name}`;
+      fileList.appendChild(div);
+    });
+  }
+
+  async function startUpload() {
+    resultDiv.innerHTML = "";
+
+    for (let i = 0; i < filesQueue.length; i++) {
+      const file = filesQueue[i];
+      await uploadSingleFile(file, i);
+    }
+
+    alert("All uploads completed!");
+  }
+
+  async function uploadSingleFile(file, index) {
+    const formData = new FormData();
+
+    formData.append("action", "frm_submit_dropzone");
+    formData.append("field_id", "12");
+    formData.append("form_id", "3");
+    formData.append("nonce", "38ca74d48f");
+    formData.append("file12", file);
+
+    try {
+      const response = await fetch(
+        "https://www.unitedhospitalservices.com/wp-admin/admin-ajax.php",
+        {
+          method: "POST",
+          body: formData
+        }
+      );
+
+      const text = await response.text();
+
+      // Construct URL manually
+      const fileUrl =
+        "https://www.unitedhospitalservices.com/wp-content/uploads/formidable/3/" +
+        file.name;
+
+      const div = document.createElement("div");
+      div.className = "success";
+      div.innerHTML = `✅ ${file.name} → <a href="${fileUrl}" target="_blank">${fileUrl}</a>`;
+      resultDiv.appendChild(div);
+
+    } catch (error) {
+      console.error("Upload error:", error);
+    }
+  }
+</script>
+
+</body>
+</html>
